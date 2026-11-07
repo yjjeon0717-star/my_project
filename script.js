@@ -4,6 +4,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
+  initFlyingSanta();
   initBackgroundSnow();
   initCountdown();
   initWishTree();
@@ -58,6 +59,124 @@ function initThemeToggle() {
       const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
       applyTheme(nextTheme, true);
     });
+  }
+}
+
+/* ==========================================================================
+   0-1. Merry Laughing Flying Santa Controller
+   ========================================================================== */
+const SANTA_LAUGHS = [
+  "Ho! Ho! Ho! 🎅 메리 크리스마스! ✨",
+  "허허허! 모두에게 따뜻한 성탄의 축복을! 🎄",
+  "올 한 해도 정말 수고 많았어요! 🎁",
+  "루돌프와 함께 하늘을 나는 중이에요! 🦌",
+  "행복과 사랑이 소복하게 쌓이길 바라요! ❄️",
+  "허허허! 착한 사람들에게 줄 선물이 가득! 🌟"
+];
+
+function initFlyingSanta() {
+  const santaContainer = document.getElementById('santa-flying-container');
+  const speechText = document.getElementById('santa-speech-text');
+  if (!santaContainer) return;
+
+  let laughIndex = 0;
+
+  // Periodically change Santa's cheerful message
+  setInterval(() => {
+    laughIndex = (laughIndex + 1) % SANTA_LAUGHS.length;
+    if (speechText) {
+      speechText.style.opacity = '0';
+      setTimeout(() => {
+        speechText.textContent = SANTA_LAUGHS[laughIndex];
+        speechText.style.opacity = '1';
+      }, 300);
+    }
+  }, 4800);
+
+  // Interactive Click: Aerial loop stunt, Santa's hearty laugh sound, falling gift drops!
+  santaContainer.addEventListener('click', (e) => {
+    e.stopPropagation();
+
+    // Trigger 360 loop-the-loop stunt
+    santaContainer.classList.add('looping');
+    setTimeout(() => {
+      santaContainer.classList.remove('looping');
+    }, 1300);
+
+    // Play hearty Santa laughter sound & drops
+    playSantaLaugh();
+    spawnSantaGiftDrops(e.clientX, e.clientY);
+
+    if (speechText) {
+      speechText.textContent = "허허허! 메리 크리스마스! 선물을 뿌립니다! 🎁✨";
+    }
+
+    showToast("🎅 산타클로스: 허허허! 하늘에서 크리스마스 선물을 뿌리고 갑니다! 🎁✨");
+  });
+}
+
+function playSantaLaugh() {
+  const ctx = getAudioContext();
+  const now = ctx.currentTime;
+
+  // 3 cheerful rhythmic "Ho! Ho! Ho!" chuckle notes
+  const hoTones = [
+    { freq: 220, dur: 0.22, delay: 0 },
+    { freq: 196, dur: 0.22, delay: 0.25 },
+    { freq: 164.8, dur: 0.35, delay: 0.5 }
+  ];
+
+  hoTones.forEach(({ freq, dur, delay }) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now + delay);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.88, now + delay + dur);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(900, now + delay);
+
+    gain.gain.setValueAtTime(0.28, now + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now + delay);
+    osc.stop(now + delay + dur);
+
+    // Festive bell accompaniment
+    playBellTone(freq * 3.5, dur * 0.7, 0.12);
+  });
+}
+
+function spawnSantaGiftDrops(clientX, clientY) {
+  const container = document.getElementById('santa-flying-container');
+  if (!container) return;
+
+  const rect = container.getBoundingClientRect();
+  const startX = (clientX && clientX > 0) ? clientX : (rect.left + rect.width / 2);
+  const startY = (clientY && clientY > 0) ? clientY : (rect.bottom);
+
+  const gifts = ['🎁', '⭐', '🍪', '🍬', '✨', '🎀', '🦌', '⛄'];
+
+  for (let i = 0; i < 9; i++) {
+    const drop = document.createElement('div');
+    drop.className = 'santa-gift-drop';
+    drop.textContent = gifts[Math.floor(Math.random() * gifts.length)];
+    drop.style.left = `${Math.max(20, Math.min(window.innerWidth - 50, startX + (Math.random() * 160 - 80)))}px`;
+    drop.style.top = `${startY}px`;
+    drop.style.fontSize = `${Math.random() * 1.2 + 1.3}rem`;
+    drop.style.animationDelay = `${i * 0.07}s`;
+
+    document.body.appendChild(drop);
+
+    setTimeout(() => {
+      if (drop.parentNode) drop.parentNode.removeChild(drop);
+    }, 2000);
   }
 }
 
