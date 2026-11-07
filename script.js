@@ -3,6 +3,7 @@
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+  initThemeToggle();
   initBackgroundSnow();
   initCountdown();
   initWishTree();
@@ -11,6 +12,54 @@ document.addEventListener('DOMContentLoaded', () => {
   initPostcardGenerator();
   initAudioEngine();
 });
+
+/* ==========================================================================
+   0. Dark Mode & White Mode (Light Mode) Theme Controller
+   ========================================================================== */
+function initThemeToggle() {
+  const themeBtn = document.getElementById('theme-toggle-btn');
+  const themeIcon = document.getElementById('theme-icon');
+  const themeLabel = document.getElementById('theme-label');
+
+  // Load saved preference or check OS preference
+  const savedTheme = localStorage.getItem('christmas_theme');
+  const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  let currentTheme = savedTheme || (systemPrefersLight ? 'light' : 'dark');
+
+  function applyTheme(theme, showToastMsg = false) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('christmas_theme', theme);
+    } catch (e) {}
+
+    if (theme === 'light') {
+      if (themeIcon) themeIcon.textContent = '☀️';
+      if (themeLabel) themeLabel.textContent = '화이트 모드';
+      if (showToastMsg) {
+        showToast('☀️ 화사하고 포근한 화이트 크리스마스 모드로 전환되었습니다!');
+        playChimeSound(784); // G5 note
+      }
+    } else {
+      if (themeIcon) themeIcon.textContent = '🌙';
+      if (themeLabel) themeLabel.textContent = '다크 모드';
+      if (showToastMsg) {
+        showToast('🌙 아늑하고 반짝이는 성탄 밤하늘 모드로 전환되었습니다!');
+        playChimeSound(659.25); // E5 note
+      }
+    }
+  }
+
+  // Initial application
+  applyTheme(currentTheme, false);
+
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme, true);
+    });
+  }
+}
 
 /* ==========================================================================
    1. Background Snow Particles (Canvas)
@@ -61,7 +110,8 @@ function initBackgroundSnow() {
 
     const windInfluence = (mouseX - width / 2) / (width / 2) * 0.8;
 
-    ctx.fillStyle = '#ffffff';
+    const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+    ctx.fillStyle = isLightMode ? 'rgba(96, 165, 250, 0.85)' : '#ffffff';
 
     for (let i = 0; i < snowflakes.length * snowDensityFactor; i++) {
       const flake = snowflakes[i % snowflakes.length];
